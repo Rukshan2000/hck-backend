@@ -108,4 +108,12 @@ class User extends Authenticatable
 
         return $this->role->menus()->where('path', $menuPath)->exists();
     }
+
+    // In App\Models\User.php
+
+public function getFormattedProfileIdAttribute(): string
+{
+    return str_pad((string) $this->profile_id, 8, '0', STR_PAD_LEFT);
+}
+
 }
