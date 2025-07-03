@@ -6,6 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\LessonController;
 
 /*
 |--------------------------------------------------------------------------
@@ -40,6 +41,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/tasks/{id}', 'destroy'); // Delete task
     });
     
+    // Lesson routes using controller group pattern
+    Route::controller(LessonController::class)->group(function () {
+        Route::get('/lessons', 'index');          // Get all lessons
+        Route::post('/lessons', 'store');         // Add a new lesson
+        Route::get('/lessons/{id}', 'show');      // View single lesson
+        Route::put('/lessons/{id}', 'update');    // Update lesson
+        Route::delete('/lessons/{id}', 'destroy'); // Delete lesson
+    });
+    
     // Additional routes for soft delete operations
     Route::prefix('roles')->group(function () {
         Route::get('trashed', [RoleController::class, 'trashed']);
@@ -47,6 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('{id}/force-delete', [RoleController::class, 'forceDelete']);
     });
 
+    Route::prefix('lessons')->group(function () {
+        Route::get('trashed', [LessonController::class, 'trashed']);
+        Route::patch('{id}/restore', [LessonController::class, 'restore']);
+        Route::delete('{id}/force-delete', [LessonController::class, 'forceDelete']);
+    });
+    
     Route::prefix('menus')->group(function () {
         Route::get('trashed', [MenuController::class, 'trashed']);
         Route::patch('{id}/restore', [MenuController::class, 'restore']);
