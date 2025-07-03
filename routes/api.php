@@ -6,7 +6,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\TaskController;
-use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,21 +21,15 @@ use App\Http\Controllers\AuthController;
 
 
 // Authentication routes
-Route::post('login', [AuthController::class, 'login']);
-Route::post('register', [AuthController::class, 'register']);
-Route::post('/login', [App\Http\Controllers\UserController::class, 'login']);
-
+Route::post('login', [UserController::class, 'login']);
+Route::post('register', [UserController::class, 'register']);
 Route::middleware('auth:sanctum')->group(function () {
-    // Auth routes
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::get('me', [AuthController::class, 'me']);
-    Route::get('permissions', [AuthController::class, 'permissions']);
-    Route::put('profile', [AuthController::class, 'updateProfile']);
-    
-    // Get authenticated user
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    Route::post('logout', [UserController::class, 'logout']);
+    Route::get('me', [UserController::class, 'me']);
+    Route::get('permissions', [UserController::class, 'permissions']);
+    Route::post('update-profile', [UserController::class, 'updateProfile']);
+    // Add other protected routes as needed
+});
 
     // Task routes using controller group pattern
     Route::controller(TaskController::class)->group(function () {
@@ -80,17 +73,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logs/clear', [App\Http\Controllers\UserController::class, 'clearLogs']);
         Route::get('/logs/test', [App\Http\Controllers\UserController::class, 'testLogging']);
     });
-});
 
+    Route::get('/hi',function(){
+        return "Hello";
+    });
 // Mail testing routes
-Route::prefix('mail')->group(function () {
-    Route::get('/check-config', [App\Http\Controllers\MailTestController::class, 'checkMailConfig']);
-    Route::post('/send-test', [App\Http\Controllers\MailTestController::class, 'sendTestMail']);
-});
+//Route::prefix('mail')->group(function () {
+  //  Route::get('/check-config', [App\Http\Controllers\MailTestController::class, 'checkMailConfig']);
+   // Route::post('/send-test', [App\Http\Controllers\MailTestController::class, 'sendTestMail']);
+//});
 
 // Public routes (move inside auth middleware when implementing proper authentication)
 // Route::apiResource('roles', RoleController::class);
 // Route::apiResource('menus', MenuController::class);
 // Route::apiResource('users', UserController::class);
-
 // When you want to protect all routes with authentication, move the resource routes inside the auth middleware group
