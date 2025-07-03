@@ -83,7 +83,7 @@ class UserController extends Controller
     public function show(User $user)
     {
         $user->load(['role', 'manager', 'subordinates', 'createdTasks', 'assignedTasks']);
-        return response()->json($user);
+        return response()->json($u
     }
 
     /**
