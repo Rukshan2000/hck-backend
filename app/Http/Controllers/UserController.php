@@ -30,15 +30,19 @@ class UserController extends Controller
 
     // Generate numeric profile_id
     $latestUser = User::orderBy('profile_id', 'desc')->first();
-    $profileId = $latestUser ? ($latestUser->profile_id + 1) : 1000;
+    
+    // Ensure we start with at least 1000
+    $profileId = $latestUser && $latestUser->profile_id >= 1000 ? ($latestUser->profile_id + 1) : 1000;
 
     if ($profileId > 9999) {
         $profileId = 1000;
-        while (User::where('profile_id', $profileId)->exists()) {
-            $profileId++;
-            if ($profileId > 9999) {
-                throw new \Exception('No available profile IDs in the range 1000–9999');
-            }
+    }
+    
+    // Make sure the profile_id is unique
+    while (User::where('profile_id', $profileId)->exists()) {
+        $profileId++;
+        if ($profileId > 9999) {
+            throw new \Exception('No available profile IDs in the range 1000–9999');
         }
     }
 
@@ -175,11 +179,11 @@ class UserController extends Controller
         ]);
 
         if (isset($validated['password'])) {
-            // Using a different approach to verify the password
-            $currentPassword = $validated['current_password'];
-            $hashedPassword = $user->password;
-            
-            if (!password_verify($currentPassword, $hashedPassword)) {
+            // Verify the current password using Auth attempt
+            if (!Auth::guard('web')->attempt([
+                'email' => $user->email,
+                'password' => $validated['current_password']
+            ])) {
                 return response()->json(['message' => 'Current password is incorrect'], 422);
             }
 
