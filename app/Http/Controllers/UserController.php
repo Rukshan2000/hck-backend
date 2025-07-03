@@ -19,52 +19,51 @@ class UserController extends Controller
      * Register a new user
      */
     public function register(Request $request)
-    {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-            'role_id' => 'nullable|integer',
-            'manager_id' => 'nullable|integer',
-        ]);
-        
-        // Generate a unique 4-digit profile ID
-        $latestUser = User::orderBy('profile_id', 'desc')->first();
-        $profileId = $latestUser ? ($latestUser->profile_id + 1) : 1000;
-        
-        // Ensure it's always 4 digits
-        if ($profileId > 9999) {
-            $profileId = 1000; // Reset to 1000 if it exceeds 4 digits
-            
-            // Find next available ID if there's a collision
-            while (User::where('profile_id', $profileId)->exists()) {
-                $profileId++;
-                if ($profileId > 9999) {
-                    throw new \Exception('No available profile IDs in the valid range (1000-9999)');
-                }
+{
+    $validatedData = $request->validate([
+        'name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users',
+        'password' => 'required|string|min:8|confirmed',
+        'role_id' => 'nullable|integer',
+        'manager_id' => 'nullable|integer',
+    ]);
+
+    // Generate numeric profile_id
+    $latestUser = User::orderBy('profile_id', 'desc')->first();
+    $profileId = $latestUser ? ($latestUser->profile_id + 1) : 1000;
+
+    if ($profileId > 9999) {
+        $profileId = 1000;
+        while (User::where('profile_id', $profileId)->exists()) {
+            $profileId++;
+            if ($profileId > 9999) {
+                throw new \Exception('No available profile IDs in the range 1000–9999');
             }
         }
-
-        $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
-            'role_id' => $validatedData['role_id'] ?? null,
-            'manager_id' => $validatedData['manager_id'] ?? null,
-            'remember_token' => Str::random(60),
-            'profile_id' => $profileId,
-        ]);
-
-        $user->load(['role', 'manager']);
-        $token = $user->createToken('auth-token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Registration successful',
-            'user' => $user,
-            'token' => $token,
-            'token_type' => 'Bearer',
-        ], 201);
     }
+
+    $user = User::create([
+        'name' => $validatedData['name'],
+        'email' => $validatedData['email'],
+        'password' => Hash::make($validatedData['password']),
+        'role_id' => $validatedData['role_id'] ?? null,
+        'manager_id' => $validatedData['manager_id'] ?? null,
+        'remember_token' => Str::random(60),
+        'profile_id' => $profileId, // store as integer
+    ]);
+
+    $user->load(['role', 'manager']);
+    $token = $user->createToken('auth-token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Registration successful',
+        'user' => $user,
+        'formatted_profile_id' => $user->formatted_profile_id,
+        'token' => $token,
+        'token_type' => 'Bearer',
+    ], 201);
+}
+
 
     /**
      * Login and send welcome email
