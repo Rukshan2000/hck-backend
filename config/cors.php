@@ -2,42 +2,19 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
-    |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
-    |
-    */
+    'paths' => ['api/*', 'sanctum/csrf-cookie'], // Allow CORS on these routes
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'allowed_methods' => ['*'], // Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
 
-    'allowed_methods' => ['*'],
+    'allowed_origins' => ['*'], // Allow all origins — use specific origins in production for security
 
-    'allowed_origins' => [
-        'http://localhost:3000',
-        'https://localhost:3000',
-        'http://localhost:3001',
-        'https://localhost:3001',
-        'http://127.0.0.1:3000',
-        'https://127.0.0.1:3000',
-        'http://127.0.0.1:3001',
-        'https://127.0.0.1:3001',
-    ],
+    'allowed_origins_patterns' => [], // You can use regex patterns here instead of hardcoded domains
 
-    'allowed_origins_patterns' => [],
+    'allowed_headers' => ['*'], // Allow all headers
 
-    'allowed_headers' => ['*'],
+    'exposed_headers' => [], // Optional: headers to expose to the client
 
-    'exposed_headers' => [],
+    'max_age' => 0, // How long the response can be cached by the browser (0 = no cache)
 
-    'max_age' => 0,
-
-    'supports_credentials' => true,
-
+    'supports_credentials' => true, // Allow cookies/auth headers (only works with specific origins, not '*')
 ];
