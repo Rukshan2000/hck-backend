@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'role_id',
         'manager_id',
+        'profile_id',
     ];
 
     /**

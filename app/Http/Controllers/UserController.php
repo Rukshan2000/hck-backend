@@ -62,6 +62,11 @@ class UserController extends Controller
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        
+        // Generate a unique profile ID if role_id is provided
+        if (isset($validated['role_id'])) {
+            $validated['profile_id'] = $this->generateProfileId($validated['role_id']);
+        }
 
         $user = User::create($validated);
         $user->load(['role', 'manager']);
@@ -103,6 +108,11 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'User cannot be their own manager'
             ], 422);
+        }
+        
+        // Generate new profile_id if role is changing
+        if (isset($validated['role_id']) && $validated['role_id'] != $user->role_id) {
+            $validated['profile_id'] = $this->generateProfileId($validated['role_id']);
         }
 
         $user->update($validated);
@@ -357,5 +367,59 @@ class UserController extends Controller
         }
         
         return array_slice($file, -$lines);
+    }
+    
+    /**
+     * Generate a custom profile ID based on user role
+     * 
+     * @param int $roleId The role ID of the user
+     * @return string The generated profile ID
+     */
+    private function generateProfileId($roleId)
+    {
+        // Get the role name
+        $role = \App\Models\Role::find($roleId);
+        
+        if (!$role) {
+            // Default prefix if role not found
+            return 'user' . sprintf('%03d', rand(1, 999));
+        }
+        
+        // Define prefix based on role name
+        $prefix = '';
+        switch (strtolower($role->name)) {
+            case 'student':
+                $prefix = 'st';
+                break;
+            case 'lecturer':
+                $prefix = 'lc';
+                break;
+            case 'manager':
+                $prefix = 'mn';
+                break;
+            case 'third party':
+                $prefix = 'rc';
+                break;
+            default:
+                // For other roles, use first two letters
+                $prefix = substr(strtolower($role->name), 0, 2);
+        }
+        
+        // Find the last profile_id with this prefix
+        $lastId = User::where('profile_id', 'LIKE', $prefix . '%')
+            ->orderBy('profile_id', 'desc')
+            ->value('profile_id');
+            
+        if ($lastId) {
+            // Extract the number part and increment
+            $numPart = (int) substr($lastId, strlen($prefix));
+            $newNum = $numPart + 1;
+        } else {
+            // Start with 1 if no existing IDs
+            $newNum = 1;
+        }
+        
+        // Format with leading zeros (001, 002, etc.)
+        return $prefix . sprintf('%03d', $newNum);
     }
 }
