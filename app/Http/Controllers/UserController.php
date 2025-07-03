@@ -7,6 +7,7 @@ use App\Mail\WelcomeEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -26,6 +27,23 @@ class UserController extends Controller
             'role_id' => 'nullable|integer',
             'manager_id' => 'nullable|integer',
         ]);
+        
+        // Generate a unique 4-digit profile ID
+        $latestUser = User::orderBy('profile_id', 'desc')->first();
+        $profileId = $latestUser ? ($latestUser->profile_id + 1) : 1000;
+        
+        // Ensure it's always 4 digits
+        if ($profileId > 9999) {
+            $profileId = 1000; // Reset to 1000 if it exceeds 4 digits
+            
+            // Find next available ID if there's a collision
+            while (User::where('profile_id', $profileId)->exists()) {
+                $profileId++;
+                if ($profileId > 9999) {
+                    throw new \Exception('No available profile IDs in the valid range (1000-9999)');
+                }
+            }
+        }
 
         $user = User::create([
             'name' => $validatedData['name'],
@@ -34,6 +52,7 @@ class UserController extends Controller
             'role_id' => $validatedData['role_id'] ?? null,
             'manager_id' => $validatedData['manager_id'] ?? null,
             'remember_token' => Str::random(60),
+            'profile_id' => $profileId,
         ]);
 
         $user->load(['role', 'manager']);
@@ -45,8 +64,6 @@ class UserController extends Controller
             'token' => $token,
             'token_type' => 'Bearer',
         ], 201);
-
-        Log::info();
     }
 
     /**
@@ -159,7 +176,11 @@ class UserController extends Controller
         ]);
 
         if (isset($validated['password'])) {
-            if (!Hash::check($validated['current_password'], $user->password)) {
+            // Using a different approach to verify the password
+            $currentPassword = $validated['current_password'];
+            $hashedPassword = $user->password;
+            
+            if (!password_verify($currentPassword, $hashedPassword)) {
                 return response()->json(['message' => 'Current password is incorrect'], 422);
             }
 
